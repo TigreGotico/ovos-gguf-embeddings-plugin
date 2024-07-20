@@ -4,13 +4,23 @@ The `GGUFTextEmbeddingsPlugin` is a plugin for recognizing and managing text emb
 
 It integrates with [ovos-chromadb-embeddings-plugin](https://github.com/TigreGotico/ovos-chromadb-embeddings-plugin) for storing and retrieving text embeddings.
 
-This plugin leverages the `llama-cpp-python` library to generate text embeddings. GGUF models can be used, by default the plugin bundles [all-MiniLM-L6-v2.Q4_K_M.gguf](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
+This plugin leverages the `llama-cpp-python` library to generate text embeddings. 
+
+GGUF models are used to keep 3rd party dependencies to a minimum and ensuring this solver is lightweight and suitable for low powered hardware
 
 ## Features
 
 - **Text Embeddings Extraction**: Converts text into embeddings using the `llama_cpp` model.
 - **Text Data Storage**: Stores and retrieves text embeddings using `ChromaEmbeddingsDB`.
 - **Text Data Management**: Allows for adding, querying, and deleting text embeddings associated with documents.
+
+## Suggested Models
+
+for english, [all-MiniLM-L6-v2](https://huggingface.co/leliuga/all-MiniLM-L6-v2-GGUF) is recommended (20 MB)
+
+if you need multilingual embeddings, [paraphrase-multilingual-minilm-l12-v2](https://huggingface.co/krogoldAI/paraphrase-multilingual-MiniLM-L12-v2-Q4_K_M-GGUF) is recommended (120MB)
+
+By default `paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf` will be used and downloaded on launch if missing
 
 ## Usage
 
