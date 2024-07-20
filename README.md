@@ -21,7 +21,7 @@ from ovos_gguf_embeddings import GGUFTextEmbeddingsStore
 from ovos_chromadb_embeddings import ChromaEmbeddingsDB
 
 db = ChromaEmbeddingsDB("./my_db")
-gguf = GGUFTextEmbeddingsStore(db, model=f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf")
+gguf = GGUFTextEmbeddingsStore(db, model=f"all-MiniLM-L6-v2.Q4_K_M.gguf")
 corpus = [
     "a cat is a feline and likes to purr",
     "a dog is the human's best friend and loves to play",
