@@ -17,11 +17,11 @@ This plugin leverages the `llama-cpp-python` library to generate text embeddings
 Here is a quick example of how to use the `GGUFTextEmbeddingsPlugin`:
 
 ```python
-from ovos_gguf_embeddings import GGUFTextEmbeddingRecognizer
+from ovos_gguf_embeddings import GGUFTextEmbeddingsStore
 from ovos_chromadb_embeddings import ChromaEmbeddingsDB
 
 db = ChromaEmbeddingsDB("./my_db")
-gguf = GGUFTextEmbeddingRecognizer(db, model=f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf")
+gguf = GGUFTextEmbeddingsStore(db, model=f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf")
 corpus = [
     "a cat is a feline and likes to purr",
     "a dog is the human's best friend and loves to play",

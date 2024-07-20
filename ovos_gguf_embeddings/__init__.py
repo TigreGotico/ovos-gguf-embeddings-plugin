@@ -1,10 +1,9 @@
 import llama_cpp  # pip install llama-cpp-python
 import numpy as np
-from ovos_chromadb_embeddings import ChromaEmbeddingsDB
 from ovos_plugin_manager.templates.embeddings import TextEmbeddingsStore, EmbeddingsDB
 
 
-class GGUFTextEmbeddingRecognizer(TextEmbeddingsStore):
+class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
     def __init__(self, db: EmbeddingsDB, model: str = None):
         super().__init__(db)
         mdl = model or f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf"
@@ -20,9 +19,10 @@ class GGUFTextEmbeddingRecognizer(TextEmbeddingsStore):
 
 if __name__ == "__main__":
     from os.path import dirname
+    from ovos_chromadb_embeddings import ChromaEmbeddingsDB
 
     db = ChromaEmbeddingsDB("/tmp/my_db")
-    gguf = GGUFTextEmbeddingRecognizer(db, model=f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf")
+    gguf = GGUFTextEmbeddingsStore(db, model=f"{dirname(__file__)}/all-MiniLM-L6-v2.Q4_K_M.gguf")
     corpus = [
         "a cat is a feline and likes to purr",
         "a dog is the human's best friend and loves to play",
