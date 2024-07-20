@@ -1,7 +1,7 @@
 import os.path
-from typing import Optional
+from typing import Optional, Union
 
-import llama_cpp  # pip install llama-cpp-python
+import llama_cpp
 import numpy as np
 import requests
 from ovos_chromadb_embeddings import ChromaEmbeddingsDB
@@ -16,7 +16,8 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
         "paraphrase-multilingual-minilm-l12-v2": "https://huggingface.co/krogoldAI/paraphrase-multilingual-MiniLM-L12-v2-Q4_K_M-GGUF/resolve/main/paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf"
     }
 
-    def __init__(self, db: Optional[EmbeddingsDB] = None, model: str = "paraphrase-multilingual-minilm-l12-v2"):
+    def __init__(self, db: Optional[Union[EmbeddingsDB, str]] = None,
+                 model: str = "paraphrase-multilingual-minilm-l12-v2"):
         if model in self.DEFAULT_MODELS:
             model = self.DEFAULT_MODELS[model]
         if model.startswith("http"):
@@ -32,9 +33,11 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
         if db is None:
             db_path = get_xdg_cache_save_path("chromadb")
             os.makedirs(db_path, exist_ok=True)
-            db_path = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
-            LOG.info(f"Using chromadb as text embeddings store: {db_path}")
-            db = ChromaEmbeddingsDB(db_path)
+            db = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
+
+        if isinstance(db, str):
+            LOG.info(f"Using chromadb as text embeddings store: {db}")
+            db = ChromaEmbeddingsDB(db)
 
         super().__init__(db)
 
