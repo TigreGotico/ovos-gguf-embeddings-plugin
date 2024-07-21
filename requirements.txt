@@ -1,3 +1,4 @@
 ovos-plugin-manager
 numpy
 ovos-chromadb-embeddings-plugin
+llama-cpp-python
