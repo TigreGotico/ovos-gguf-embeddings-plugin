@@ -59,3 +59,100 @@ print(docs)
 ```
 
 
+### CLI Interface
+
+```bash
+$ovos-gguf-embeddings --help 
+Usage: ovos-gguf-embeddings [OPTIONS] COMMAND [ARGS]...
+
+  CLI for interacting with the GGUF Text Embeddings Store.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  add-document     Add a document to the embeddings store.
+  delete-document  Delete a document from the embeddings store.
+  query-document   Query the embeddings store to find similar documents...
+```
+
+```bash
+$ovos-gguf-embeddings add-document --help 
+Usage: ovos-gguf-embeddings add-document [OPTIONS] DOCUMENT
+
+  Add a document to the embeddings store.
+
+  DOCUMENT: The document string or file path to be added to the store.
+
+  FROM-FILE: Flag indicating whether the DOCUMENT argument is a file path. If
+  set, the file is read and processed.
+
+  USE-SENTENCES: Flag indicating whether to tokenize the document into
+  sentences. If not set, the document is split into paragraphs.
+
+  DATABASE: Path to the ChromaDB database where the embeddings are stored.
+  (Required)
+
+  MODEL: Name or URL of the model used for generating embeddings. (Defaults to
+  'paraphrase-multilingual-minilm-l12-v2')
+
+Options:
+  --database TEXT  Path to the ChromaDB database where the embeddings are
+                   stored.
+  --model TEXT     Model name or URL used for generating embeddings. Defaults
+                   to "paraphrase-multilingual-minilm-l12-v2".
+  --from-file      Indicates if the document argument is a file path.
+  --use-sentences  Indicates if the document should be tokenized into
+                   sentences; otherwise, it is split into paragraphs.
+  --help           Show this message and exit.
+```
+
+```bash
+$ovos-gguf-embeddings query-document --help 
+Usage: ovos-gguf-embeddings query-document [OPTIONS] QUERY
+
+  Query the embeddings store to find similar documents to the given query.
+
+  QUERY: The query string used to search for similar documents.
+
+  DATABASE: Path to the ChromaDB database where the embeddings are stored. Can
+  be a full path or a simple string.           If a simple string is provided,
+  it will be saved in the XDG cache directory (~/.cache/chromadb/{database}).
+
+  MODEL: Name or URL of the model used for generating embeddings. (Defaults to
+  'paraphrase-multilingual-minilm-l12-v2')
+
+  TOP-K: Number of top results to return. (Defaults to 5)
+
+Options:
+  --database TEXT  Path to the ChromaDB database where the embeddings are
+                   stored.
+  --model TEXT     Model name or URL used for generating embeddings. Defaults
+                   to "paraphrase-multilingual-minilm-l12-v2".
+  --top-k INTEGER  Number of top results to return. Defaults to 5.
+  --help           Show this message and exit.
+
+```
+
+```bash
+$ovos-gguf-embeddings delete-document --help 
+Usage: ovos-gguf-embeddings delete-document [OPTIONS] DOCUMENT
+
+  Delete a document from the embeddings store.
+
+  DOCUMENT: The document string to be deleted from the store.
+
+  DATABASE: Path to the ChromaDB database where the embeddings are stored. Can
+  be a full path or a simple string.           If a simple string is provided,
+  it will be saved in the XDG cache directory (~/.cache/chromadb/{database}).
+
+  MODEL: Name or URL of the model used for generating embeddings. (Defaults to
+  'paraphrase-multilingual-minilm-l12-v2')
+
+Options:
+  --database TEXT  ChromaDB database where the embeddings are stored.
+  --model TEXT     Model name or URL used for generating embeddings. Defaults
+                   to "paraphrase-multilingual-minilm-l12-v2".
+  --help           Show this message and exit.
+```
+
