@@ -55,11 +55,16 @@ setup(
     url='https://github.com/TigreGotico/ovos-gguf-embeddings-plugin',
     author='jarbasai',
     author_email='jarbasai@mailfence.com',
-    license='MIT',
+    license='Apache 2.0',
     packages=['ovos_gguf_embeddings'],
     zip_safe=True,
     keywords='OVOS openvoiceos plugin gguf recognition',
-    entry_points={'opm.embeddings.text': PLUGIN_ENTRY_POINT},
+    entry_points={'opm.embeddings.text': PLUGIN_ENTRY_POINT,
+
+                  'console_scripts': [
+                      'ovos-gguf-embeddings=ovos_gguf_embeddings.cli:cli'
+                  ]
+                  },
     install_requires=required("requirements.txt"),
     long_description=long_desc,
     long_description_content_type='text/markdown'

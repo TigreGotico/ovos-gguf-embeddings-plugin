@@ -39,6 +39,8 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
             db = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
 
         if isinstance(db, str):
+            if "/" not in db:  # use xdg path
+                db = f"{get_xdg_cache_save_path("chromadb")}/{db}"
             LOG.info(f"Using chromadb as text embeddings store: {db}")
             db = ChromaEmbeddingsDB(db)
 
