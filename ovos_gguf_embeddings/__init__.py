@@ -20,11 +20,13 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
     }
 
     def __init__(self, db: Optional[Union[EmbeddingsDB, str]] = None,
-                 model: str = "paraphrase-multilingual-minilm-l12-v2"):
+                 model: str = "paraphrase-multilingual-minilm-l12-v2",
+                 n_gpu_layers=0,
+                 skip_db: bool=False):
         if model in self.DEFAULT_MODELS:
             model = self.DEFAULT_MODELS[model]
         if model.startswith("http"):
-            model_path = f"{get_xdg_cache_save_path("gguf_models")}/{model.split('/')[-1]}"
+            model_path = f"{get_xdg_cache_save_path('gguf_models')}/{model.split('/')[-1]}"
             if not os.path.isfile(model_path):
                 os.makedirs(get_xdg_cache_save_path("gguf_models"), exist_ok=True)
                 LOG.info(f"Downloading {model}")
@@ -33,23 +35,25 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
                     f.write(data)
             model = model_path
 
-        if db is None:
-            db_path = get_xdg_cache_save_path("chromadb")
-            os.makedirs(db_path, exist_ok=True)
-            db = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
+        if not skip_db:
+            if db is None:
+                db_path = get_xdg_cache_save_path("chromadb")
+                os.makedirs(db_path, exist_ok=True)
+                db = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
 
-        if isinstance(db, str):
-            if "/" not in db:  # use xdg path
-                db = f"{get_xdg_cache_save_path("chromadb")}/{db}"
-            LOG.info(f"Using chromadb as text embeddings store: {db}")
-            db = ChromaEmbeddingsDB(db)
+            if isinstance(db, str):
+                if "/" not in db:  # use xdg path
+                    db = f"{get_xdg_cache_save_path('chromadb')}/{db}"
+                LOG.info(f"Using chromadb as text embeddings store: {db}")
+                db = ChromaEmbeddingsDB(db)
 
-        super().__init__(db)
+            super().__init__(db)
 
         LOG.info(f"Loading embeddings model: {model}")
         self.model = llama_cpp.Llama(
             model_path=model,
             verbose=False,
+            n_gpu_layers=n_gpu_layers,
             embedding=True)
 
     def get_text_embeddings(self, text: str) -> np.ndarray:
