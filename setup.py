@@ -44,7 +44,7 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
-PLUGIN_ENTRY_POINT = 'ovos-gguf-embeddings-plugin=ovos_gguf_embeddings:GGUFTextEmbeddingRecognizer'
+PLUGIN_ENTRY_POINT = 'ovos-gguf-embeddings-plugin=ovos_gguf_embeddings:GGUFTextEmbeddingsStore'
 
 
 setup(
