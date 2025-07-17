@@ -1,29 +1,31 @@
-import os.path
-from typing import Optional, Union
-
-import llama_cpp
+import os
+from typing import Dict, Any, Union
 import numpy as np
 import requests
-from ovos_chromadb_embeddings import ChromaEmbeddingsDB
 from ovos_config.locations import get_xdg_cache_save_path
-from ovos_plugin_manager.templates.embeddings import TextEmbeddingsStore, EmbeddingsDB
+from ovos_plugin_manager.templates.embeddings import EmbeddingsArray, TextEmbedder
 from ovos_utils.log import LOG
+import llama_cpp
 
 
-class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
+class GGUFEmbeddings(TextEmbedder):
+    """
+    A TextEmbedder implementation that uses GGUF models via llama_cpp for generating text embeddings.
+    Models are automatically downloaded and cached locally.
+    """
+
     DEFAULT_MODELS = {
         "all-MiniLM-L6-v2": "https://huggingface.co/leliuga/all-MiniLM-L6-v2-GGUF/resolve/main/all-MiniLM-L6-v2.Q4_K_M.gguf",
         "all-MiniLM-L12-v2": "https://huggingface.co/leliuga/all-MiniLM-L12-v2-GGUF/resolve/main/all-MiniLM-L12-v2.Q4_K_M.gguf",
         "multi-qa-MiniLM-L6-cos-v1": "https://huggingface.co/Felladrin/gguf-multi-qa-MiniLM-L6-cos-v1/resolve/main/multi-qa-MiniLM-L6-cos-v1.Q4_K_M.gguf",
         "gist-all-minilm-l6-v2": "https://huggingface.co/afrideva/GIST-all-MiniLM-L6-v2-GGUF/resolve/main/gist-all-minilm-l6-v2.Q4_K_M.gguf",
-        "paraphrase-multilingual-minilm-l12-v2": "https://huggingface.co/krogoldAI/paraphrase-multilingual-MiniLM-L12-v2-Q4_K_M-GGUF/resolve/main/paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf",
+       # "paraphrase-multilingual-minilm-l12-v2": "https://huggingface.co/krogoldAI/paraphrase-multilingual-MiniLM-L12-v2-Q4_K_M-GGUF/resolve/main/paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf",
         "e5-small-v2": "https://huggingface.co/ChristianAzinn/e5-small-v2-gguf/resolve/main/e5-small-v2.Q4_K_M.gguf",
         "gte-small": "https://huggingface.co/ChristianAzinn/gte-small-gguf/resolve/main/gte-small.Q4_K_M.gguf",
         "gte-base": "https://huggingface.co/ChristianAzinn/gte-base-gguf/resolve/main/gte-base.Q4_K_M.gguf",
         "gte-large": "https://huggingface.co/ChristianAzinn/gte-large-gguf/resolve/main/gte-large.Q4_K_M.gguf",
         "snowflake-arctic-embed-l": "https://huggingface.co/ChristianAzinn/snowflake-arctic-embed-l-gguf/resolve/main/snowflake-arctic-embed-l--Q4_K_M.GGUF",
         "snowflake-arctic-embed-m": "https://huggingface.co/ChristianAzinn/snowflake-arctic-embed-m-gguf/resolve/main/snowflake-arctic-embed-m--Q4_K_M.GGUF",
-        "snowflake-arctic-embed-m.long": "https://huggingface.co/ChristianAzinn/snowflake-arctic-embed-m-long-gguf/resolve/main/snowflake-arctic-embed-m-long-Q4_K_M.GGUF",
         "snowflake-arctic-embed-s": "https://huggingface.co/ChristianAzinn/snowflake-arctic-embed-s-gguf/resolve/main/snowflake-arctic-embed-s--Q4_K_M.GGUF",
         "snowflake-arctic-embed-xs": "https://huggingface.co/ChristianAzinn/snowflake-arctic-embed-xs-gguf/resolve/main/snowflake-arctic-embed-xs--Q4_K_M.GGUF",
         "nomic-embed-text-v1.5": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/main/nomic-embed-text-v1.5.Q4_K_M.gguf",
@@ -41,85 +43,210 @@ class GGUFTextEmbeddingsStore(TextEmbeddingsStore):
         "gte-Qwen2-7B-instruct": "https://huggingface.co/niancheng/gte-Qwen2-7B-instruct-Q4_K_M-GGUF/resolve/main/gte-qwen2-7b-instruct-q4_k_m.gguf",
     }
 
-    def __init__(self, db: Optional[Union[EmbeddingsDB, str]] = None,
-                 model: str = "paraphrase-multilingual-minilm-l12-v2",
-                 n_gpu_layers=0,
-                 skip_db: bool=False):
-        if model in self.DEFAULT_MODELS:
-            model = self.DEFAULT_MODELS[model]
-        if model.startswith("http"):
-            model_path = f"{get_xdg_cache_save_path('gguf_models')}/{model.split('/')[-1]}"
+    def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initializes the GGUFEmbeddings instance.
+
+        Args:
+            config (Dict[str, Any], optional): Configuration dictionary.
+                Expected keys:
+                - "model" (str): The name of a model from DEFAULT_MODELS, a direct URL, or a local file path.
+                                 Defaults to "labse".
+                - "n_gpu_layers" (int): Number of GPU layers to offload. Defaults to 0.
+                - Any other llama_cpp.Llama constructor arguments.
+        """
+        super().__init__(config)
+        self.model = None
+        self._load_model()
+
+    @staticmethod
+    def _download_model(url: str, model_path: str):
+        """
+        Downloads a GGUF model from a given URL with streaming and progress indication.
+
+        Args:
+            url (str): The URL of the model to download.
+            model_path (str): The local path where the model will be saved.
+        """
+        LOG.info(f"Downloading model from {url} to {model_path}")
+        try:
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+            response = requests.get(url, stream=True, timeout=300) # 5 minute timeout
+            response.raise_for_status()  # Raise an exception for HTTP errors
+
+            total_size = int(response.headers.get('content-length', 0))
+            block_size = 8192  # 8KB
+            downloaded_size = 0
+
+            with open(model_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=block_size):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+                        if total_size > 0:
+                            progress = (downloaded_size / total_size) * 100
+                            LOG.debug(f"Download progress: {progress:.2f}% ({downloaded_size}/{total_size} bytes)")
+                        else:
+                            LOG.debug(f"Downloaded {downloaded_size} bytes...")
+            LOG.info(f"Successfully downloaded model to {model_path}")
+        except requests.exceptions.RequestException as e:
+            LOG.error(f"Failed to download model from {url}: {e}")
+            if os.path.exists(model_path):
+                os.remove(model_path) # Clean up partial download
+            raise
+        except IOError as e:
+            LOG.error(f"Failed to write model to {model_path}: {e}")
+            raise
+
+    def _load_model(self):
+        """
+        Loads the GGUF embedding model based on the configuration.
+        Handles model selection (default, URL, local path) and downloading if necessary.
+        """
+        model_id = self.config.get("model", "labse")
+        model_path: Union[str, None] = None
+
+        if model_id in self.DEFAULT_MODELS:
+            model_url = self.DEFAULT_MODELS[model_id]
+            model_filename = model_url.split('/')[-1]
+            model_path = os.path.join(get_xdg_cache_save_path('gguf_models'), model_filename)
+
             if not os.path.isfile(model_path):
-                os.makedirs(get_xdg_cache_save_path("gguf_models"), exist_ok=True)
-                LOG.info(f"Downloading {model}")
-                data = requests.get(model).content
-                with open(model_path, "wb") as f:
-                    f.write(data)
-            model = model_path
+                try:
+                    self._download_model(model_url, model_path)
+                except Exception as e:
+                    LOG.error(f"Could not download and load model {model_id}: {e}")
+                    self.model = None
+                    return
+            else:
+                LOG.info(f"Using cached model: {model_path}")
+        elif model_id.startswith("http"):
+            model_url = model_id
+            model_filename = model_url.split('/')[-1]
+            model_path = os.path.join(get_xdg_cache_save_path('gguf_models'), model_filename)
 
-        if not skip_db:
-            if db is None:
-                db_path = get_xdg_cache_save_path("chromadb")
-                os.makedirs(db_path, exist_ok=True)
-                db = f"{db_path}/{model.split('/')[-1].split('.')[0]}"
+            if not os.path.isfile(model_path):
+                try:
+                    self._download_model(model_url, model_path)
+                except Exception as e:
+                    LOG.error(f"Could not download and load model from URL {model_url}: {e}")
+                    self.model = None
+                    return
+            else:
+                LOG.info(f"Using cached model from URL: {model_path}")
+        elif os.path.isfile(model_id):
+            model_path = model_id
+            LOG.info(f"Using local model file: {model_path}")
+        else:
+            LOG.error(f"Invalid model specified: {model_id}. Must be a default model name, URL, or local path.")
+            self.model = None
+            return
 
-            if isinstance(db, str):
-                if "/" not in db:  # use xdg path
-                    db = f"{get_xdg_cache_save_path('chromadb')}/{db}"
-                LOG.info(f"Using chromadb as text embeddings store: {db}")
-                db = ChromaEmbeddingsDB(db)
+        if model_path:
+            try:
+                # Extract llama_cpp specific arguments from config
+                llama_args = {k: v for k, v in self.config.items() if k not in ["model"]}
+                llama_args.setdefault("n_gpu_layers", 0)
+                llama_args.setdefault("verbose", False)
+                llama_args.setdefault("embedding", True)
 
-            super().__init__(db)
+                LOG.info(f"Loading embeddings model: {model_path} with args: {llama_args}")
+                self.model = llama_cpp.Llama(
+                    model_path=model_path,
+                    **llama_args
+                )
+            except Exception as e:
+                LOG.error(f"Failed to load llama_cpp model from {model_path}: {e}")
+                self.model = None
+        else:
+            raise ValueError(f"Invalid model_id '{model_id}'")
 
-        LOG.info(f"Loading embeddings model: {model}")
-        self.model = llama_cpp.Llama(
-            model_path=model,
-            verbose=False,
-            n_gpu_layers=n_gpu_layers,
-            embedding=True)
+    def get_embeddings(self, text: str) -> EmbeddingsArray:
+        """
+        Convert text to its corresponding embeddings using the loaded GGUF model.
 
-    def get_text_embeddings(self, text: str) -> np.ndarray:
-        embeddings = self.model.create_embedding(text)
-        e = embeddings["data"][0]['embedding']
-        return e
+        Args:
+            text (str): The input text to be converted.
 
+        Returns:
+            np.ndarray: The resulting embeddings.
+
+        Raises:
+            RuntimeError: If the embedding model failed to load.
+            Exception: If there's an error during embedding generation.
+        """
+        if self.model is None:
+            raise RuntimeError("Embedding model not loaded. Please check logs for errors during initialization.")
+        try:
+            embeddings = self.model.create_embedding(text)
+            e: np.ndarray = np.array(embeddings["data"][0]['embedding'])
+            return e
+        except Exception as e:
+            LOG.error(f"Error generating embeddings for text '{text}': {e}")
+            raise
 
 if __name__ == "__main__":
-    from os.path import dirname
+    # Example usage:
+    # Ensure you have llama-cpp-python installed: pip install llama-cpp-python
+    # And ovos-plugin-manager: pip install ovos-plugin-manager ovos-utils ovos-config requests numpy
 
-    for m in GGUFTextEmbeddingsStore.DEFAULT_MODELS:
-        print("Testing model:", m)
-        gguf = GGUFTextEmbeddingsStore(model=m)
-        corpus = [
-            "a cat is a feline and likes to purr",
-            "a dog is the human's best friend and loves to play",
-            "a bird is a beautiful animal that can fly",
-            "a fish is a creature that lives in water and swims",
+    # Test with a default model (will download if not cached)
+    print("\n--- Testing default model (labse) ---")
+    try:
+        gguf_default = GGUFEmbeddings()
+        corpus_default = [
+            "The quick brown fox jumps over the lazy dog.",
+            "A lazy dog is sleeping under a tree.",
+            "Cats are known for their agility and grace.",
+            "Dogs are loyal companions and often playful.",
         ]
-        for s in corpus:
-            gguf.add_document(s)
+        for s in corpus_default:
+            try:
+                embeddings = gguf_default.get_embeddings(s)
+                print(f"Text: '{s}' | Embeddings shape: {embeddings.shape}")
+            except Exception as e:
+                print(f"Error getting embeddings for '{s}': {e}")
+    except Exception as e:
+        print(f"Failed to initialize GGUFEmbeddings with default model: {e}")
 
-        docs = gguf.query("does the fish purr like a cat?", top_k=2)
-        print(docs)
+    # Test with a specific model from DEFAULT_MODELS
+    print("\n--- Testing specific model (all-MiniLM-L6-v2) ---")
+    try:
+        gguf_minilm = GGUFEmbeddings(config={"model": "all-MiniLM-L6-v2", "n_gpu_layers": 0})
+        corpus_minilm = [
+            "This is a sentence about natural language processing.",
+            "NLP is a field of artificial intelligence.",
+        ]
+        for s in corpus_minilm:
+            try:
+                embeddings = gguf_minilm.get_embeddings(s)
+                print(f"Text: '{s}' | Embeddings shape: {embeddings.shape}")
+            except Exception as e:
+                print(f"Error getting embeddings for '{s}': {e}")
+    except Exception as e:
+        print(f"Failed to initialize GGUFEmbeddings with all-MiniLM-L6-v2: {e}")
 
-    # Testing model: all-MiniLM-L6-v2
-    # 2024-07-21 01:31:46.362 - OVOS - __main__:__init__:42 - INFO - Using chromadb as text embeddings store: /home/miro/.cache/chromadb/all-MiniLM-L6-v2
-    # 2024-07-21 01:31:46.442 - OVOS - __main__:__init__:47 - INFO - Loading embeddings model: /home/miro/.cache/gguf_models/all-MiniLM-L6-v2.Q4_K_M.gguf
-    # [('a cat is a feline and likes to purr', 0.3451897998969252), ('a fish is a creature that lives in water and swims', 0.4563342825593655)]
-    # Testing model: all-MiniLM-L12-v2
-    # 2024-07-21 01:31:46.557 - OVOS - __main__:__init__:30 - INFO - Downloading https://huggingface.co/leliuga/all-MiniLM-L12-v2-GGUF/resolve/main/all-MiniLM-L12-v2.Q4_K_M.gguf
-    # 2024-07-21 01:31:49.140 - OVOS - __main__:__init__:42 - INFO - Using chromadb as text embeddings store: /home/miro/.cache/chromadb/all-MiniLM-L12-v2
-    # 2024-07-21 01:31:49.200 - OVOS - __main__:__init__:47 - INFO - Loading embeddings model: /home/miro/.cache/gguf_models/all-MiniLM-L12-v2.Q4_K_M.gguf
-    # [('a cat is a feline and likes to purr', 0.2906984556278187), ('a fish is a creature that lives in water and swims', 0.5051804110638556)]
-    # Testing model: multi-qa-MiniLM-L6-cos-v1
-    # 2024-07-21 01:31:49.257 - OVOS - __main__:__init__:42 - INFO - Using chromadb as text embeddings store: /home/miro/.cache/chromadb/multi-qa-MiniLM-L6-cos-v1
-    # 2024-07-21 01:31:49.261 - OVOS - __main__:__init__:47 - INFO - Loading embeddings model: /home/miro/.cache/gguf_models/multi-qa-MiniLM-L6-cos-v1.Q4_K_M.gguf
-    # [('a cat is a feline and likes to purr', 0.30274518825428487), ('a fish is a creature that lives in water and swims', 0.5406810818023648)]
-    # Testing model: gist-all-minilm-l6-v2
-    # 2024-07-21 01:31:49.306 - OVOS - __main__:__init__:42 - INFO - Using chromadb as text embeddings store: /home/miro/.cache/chromadb/gist-all-minilm-l6-v2
-    # 2024-07-21 01:31:49.310 - OVOS - __main__:__init__:47 - INFO - Loading embeddings model: /home/miro/.cache/gguf_models/gist-all-minilm-l6-v2.Q4_K_M.gguf
-    # [('a cat is a feline and likes to purr', 0.11505124693827362), ('a fish is a creature that lives in water and swims', 0.17233980976734598)]
-    # Testing model: paraphrase-multilingual-minilm-l12-v2
-    # 2024-07-21 01:31:49.358 - OVOS - __main__:__init__:42 - INFO - Using chromadb as text embeddings store: /home/miro/.cache/chromadb/paraphrase-multilingual-minilm-l12-v2
-    # 2024-07-21 01:31:49.362 - OVOS - __main__:__init__:47 - INFO - Loading embeddings model: /home/miro/.cache/gguf_models/paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf
-    # [('a fish is a creature that lives in water and swims', 0.16902063816774904), ('a cat is a feline and likes to purr', 0.2679446374144535)]
+    # Test with a non-existent model to demonstrate error handling
+    print("\n--- Testing non-existent model (should fail) ---")
+    try:
+        gguf_invalid = GGUFEmbeddings(config={"model": "non-existent-model"})
+        if gguf_invalid.model is None:
+            print("Correctly failed to load non-existent model.")
+        else:
+            print("Unexpected: Non-existent model loaded successfully.")
+    except Exception as e:
+        print(f"Caught expected error for non-existent model: {e}")
+
+    # Test with a local file path (replace with a real path if you have one)
+    # print("\n--- Testing local file path (replace with your model path) ---")
+    # local_model_path = "/path/to/your/model.gguf" # <<< CHANGE THIS
+    # if os.path.exists(local_model_path):
+    #     try:
+    #         gguf_local = GGUFEmbeddings(config={"model": local_model_path})
+    #         embeddings = gguf_local.get_embeddings("Hello world from local model!")
+    #         print(f"Local model embeddings shape: {embeddings.shape}")
+    #     except Exception as e:
+    #         print(f"Failed to initialize GGUFEmbeddings with local model: {e}")
+    # else:
+    #     print(f"Skipping local model test: {local_model_path} does not exist.")
+

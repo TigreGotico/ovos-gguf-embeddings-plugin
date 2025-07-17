@@ -44,7 +44,7 @@ def required(requirements_file):
                 if pkg.strip() and not pkg.startswith("#")]
 
 
-PLUGIN_ENTRY_POINT = 'ovos-gguf-embeddings-plugin=ovos_gguf_embeddings:GGUFTextEmbeddingsStore'
+PLUGIN_ENTRY_POINT = 'ovos-gguf-embeddings-plugin=ovos_gguf_embeddings:GGUFEmbeddings'
 
 
 setup(
@@ -58,12 +58,7 @@ setup(
     packages=['ovos_gguf_embeddings'],
     zip_safe=True,
     keywords='OVOS openvoiceos plugin gguf recognition',
-    entry_points={'opm.embeddings.text': PLUGIN_ENTRY_POINT,
-
-                  'console_scripts': [
-                      'ovos-gguf-embeddings=ovos_gguf_embeddings.cli:cli'
-                  ]
-                  },
+    entry_points={'opm.embeddings.text': PLUGIN_ENTRY_POINT},
     install_requires=required("requirements.txt"),
     long_description=long_desc,
     long_description_content_type='text/markdown'
