@@ -48,6 +48,14 @@ class GGUFEmbeddings(TextEmbedder):
         Initialize a GGUFEmbeddings instance with the specified configuration.
         
         Loads a GGUF model for text embedding generation based on the provided configuration dictionary. The model can be selected by name (from DEFAULT_MODELS), direct URL, or local file path. Additional configuration options are passed to the underlying llama_cpp.Llama model loader.
+        
+        Args:
+            config (Dict[str, Any], optional): Configuration dictionary.
+                Expected keys:
+                - "model" (str): The name of a model from DEFAULT_MODELS, a direct URL, or a local file path.
+                                 Defaults to "labse".
+                - "n_gpu_layers" (int): Number of GPU layers to offload. Defaults to 0.
+                - Any other llama_cpp.Llama constructor arguments.
         """
         super().__init__(config)
         self.model = None
