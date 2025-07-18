@@ -45,15 +45,9 @@ class GGUFEmbeddings(TextEmbedder):
 
     def __init__(self, config: Dict[str, Any] = None):
         """
-        Initializes the GGUFEmbeddings instance.
-
-        Args:
-            config (Dict[str, Any], optional): Configuration dictionary.
-                Expected keys:
-                - "model" (str): The name of a model from DEFAULT_MODELS, a direct URL, or a local file path.
-                                 Defaults to "labse".
-                - "n_gpu_layers" (int): Number of GPU layers to offload. Defaults to 0.
-                - Any other llama_cpp.Llama constructor arguments.
+        Initialize a GGUFEmbeddings instance with the specified configuration.
+        
+        Loads a GGUF model for text embedding generation based on the provided configuration dictionary. The model can be selected by name (from DEFAULT_MODELS), direct URL, or local file path. Additional configuration options are passed to the underlying llama_cpp.Llama model loader.
         """
         super().__init__(config)
         self.model = None
@@ -62,11 +56,11 @@ class GGUFEmbeddings(TextEmbedder):
     @staticmethod
     def _download_model(url: str, model_path: str):
         """
-        Downloads a GGUF model from a given URL with streaming and progress indication.
-
-        Args:
-            url (str): The URL of the model to download.
-            model_path (str): The local path where the model will be saved.
+        Download a GGUF model file from a specified URL to a local path, streaming the content and logging progress.
+        
+        Raises:
+            requests.exceptions.RequestException: If the download fails due to a network or HTTP error.
+            IOError: If writing the file to disk fails.
         """
         LOG.info(f"Downloading model from {url} to {model_path}")
         try:
@@ -100,8 +94,9 @@ class GGUFEmbeddings(TextEmbedder):
 
     def _load_model(self):
         """
-        Loads the GGUF embedding model based on the configuration.
-        Handles model selection (default, URL, local path) and downloading if necessary.
+        Load the GGUF embedding model according to the configuration, handling model selection, downloading, and initialization.
+        
+        Determines the model source from the configuration (default model name, URL, or local file path). Downloads the model if not already cached, and loads it using `llama_cpp.Llama` with appropriate arguments. If the model cannot be loaded, sets `self.model` to `None` and logs the error.
         """
         model_id = self.config.get("model", "labse")
         model_path: Union[str, None] = None
@@ -163,17 +158,17 @@ class GGUFEmbeddings(TextEmbedder):
 
     def get_embeddings(self, text: str) -> EmbeddingsArray:
         """
-        Convert text to its corresponding embeddings using the loaded GGUF model.
-
-        Args:
-            text (str): The input text to be converted.
-
+        Generate embeddings for the given text using the loaded GGUF model.
+        
+        Parameters:
+            text (str): Input text to generate embeddings for.
+        
         Returns:
-            np.ndarray: The resulting embeddings.
-
+            EmbeddingsArray: NumPy array containing the embedding vector.
+        
         Raises:
-            RuntimeError: If the embedding model failed to load.
-            Exception: If there's an error during embedding generation.
+            RuntimeError: If the embedding model is not loaded.
+            Exception: If embedding generation fails.
         """
         if self.model is None:
             raise RuntimeError("Embedding model not loaded. Please check logs for errors during initialization.")

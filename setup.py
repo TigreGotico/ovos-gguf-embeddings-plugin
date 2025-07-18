@@ -34,7 +34,17 @@ def get_version():
 
 
 def required(requirements_file):
-    """ Read requirements file and remove comments and empty lines. """
+    """
+    Parse a requirements file and return a list of package requirements, optionally loosening version constraints if specified by an environment variable.
+    
+    If the environment variable `MYCROFT_LOOSE_REQUIREMENTS` is set, strict version specifiers (`==`, `~=`) are converted to loose specifiers (`>=`). Comments and empty lines are excluded from the result.
+    
+    Parameters:
+        requirements_file (str): Path to the requirements file to parse.
+    
+    Returns:
+        list[str]: List of package requirement strings.
+    """
     with open(os.path.join(BASEDIR, requirements_file), 'r') as f:
         requirements = f.read().splitlines()
         if 'MYCROFT_LOOSE_REQUIREMENTS' in os.environ:
