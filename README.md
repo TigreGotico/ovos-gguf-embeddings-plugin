@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TigreGotico/ovos-gguf-embeddings-plugin)
+
 # GGUFTextEmbeddingsPlugin
 
 The `GGUFTextEmbeddingsPlugin` is a plugin for recognizing and managing text embeddings.
