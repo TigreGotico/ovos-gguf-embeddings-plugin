@@ -1,12 +1,12 @@
 # Changelog
 
-## [1.0.0a1](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/tree/1.0.0a1) (2025-07-22)
+## [1.0.1a1](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/tree/1.0.1a1) (2025-12-18)
 
-[Full Changelog](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/compare/0.1.0...1.0.0a1)
+[Full Changelog](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/compare/1.0.0...1.0.1a1)
 
-**Breaking changes:**
+**Merged pull requests:**
 
-- refactor!:modernize for latest OPM [\#6](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/pull/6) ([JarbasAl](https://github.com/JarbasAl))
+- chore: Configure Renovate [\#9](https://github.com/TigreGotico/ovos-gguf-embeddings-plugin/pull/9) ([renovate[bot]](https://github.com/apps/renovate))
 
 
 
