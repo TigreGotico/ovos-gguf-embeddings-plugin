@@ -5,7 +5,10 @@ import requests
 from ovos_config.locations import get_xdg_cache_save_path
 from ovos_plugin_manager.templates.embeddings import EmbeddingsArray, TextEmbedder
 from ovos_utils.log import LOG
-import llama_cpp
+try:
+    import llama_cpp
+except ImportError:
+    llama_cpp = None
 
 
 class GGUFEmbeddings(TextEmbedder):

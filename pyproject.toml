@@ -21,6 +21,9 @@ dependencies = [
 Homepage = "https://github.com/TigreGotico/ovos-gguf-embeddings-plugin"
 Repository = "https://github.com/TigreGotico/ovos-gguf-embeddings-plugin"
 
+[project.optional-dependencies]
+test = ["pytest", "numpy"]
+
 [project.entry-points."opm.embeddings.text"]
 ovos-gguf-embeddings-plugin = "ovos_gguf_embeddings:GGUFEmbeddings"
 

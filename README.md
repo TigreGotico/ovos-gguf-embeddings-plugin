@@ -28,7 +28,6 @@ If needed a model will be automatically downloaded to `~/.cache/gguf_models`
 | all-MiniLM-L12-v2                     | [Link](https://huggingface.co/leliuga/all-MiniLM-L12-v2-GGUF/resolve/main/all-MiniLM-L12-v2.Q4_K_M.gguf)                                                  | A larger MiniLM model mapping sentences & paragraphs to a 384-dimensional dense vector space. Fine-tuned on a 1B sentence pairs dataset using contrastive learning. Provides higher accuracy for complex tasks.                                                                                                             | Suitable for more complex NLP tasks requiring higher accuracy, such as detailed semantic analysis, document ranking, and clustering.                                              |
 | multi-qa-MiniLM-L6-cos-v1             | [Link](https://huggingface.co/Felladrin/gguf-multi-qa-MiniLM-L6-cos-v1/resolve/main/multi-qa-MiniLM-L6-cos-v1.Q4_K_M.gguf)                                | A sentence-transformers model mapping sentences & paragraphs to a 384-dimensional dense vector space, trained on 215M QA pairs. Designed for semantic search.                                                                                                                                                               | Best for semantic search, encoding queries/questions, and finding relevant documents or passages in QA tasks.                                                                     |
 | gist-all-minilm-l6-v2                 | [Link](https://huggingface.co/afrideva/GIST-all-MiniLM-L6-v2-GGUF/resolve/main/gist-all-minilm-l6-v2.Q4_K_M.gguf)                                         | Enhanced version of all-MiniLM-L6-v2 using GISTEmbed method, improving in-batch negative selection during training. Demonstrates state-of-the-art performance on specific tasks with a focus on reducing data noise and improving model fine-tuning.                                                                        | Ideal for high-accuracy retrieval tasks, semantic search, and applications requiring efficient smaller models with robust performance, such as resource-constrained environments. |
-| paraphrase-multilingual-minilm-l12-v2 | [Link](https://huggingface.co/krogoldAI/paraphrase-multilingual-MiniLM-L12-v2-Q4_K_M-GGUF/resolve/main/paraphrase-multilingual-minilm-l12-v2.Q4_K_M.gguf) | A sentence-transformers model mapping sentences & paragraphs to a 384-dimensional dense vector space. Supports multiple languages, optimized for paraphrasing tasks.                                                                                                                                                        | Perfect for multilingual applications, translation services, and tasks requiring paraphrase detection and generation.                                                             |
 | e5-small-v2                           | [Link](https://huggingface.co/ChristianAzinn/e5-small-v2-gguf/resolve/main/e5-small-v2.Q4_K_M.gguf)                                                       | Text Embeddings by Weakly-Supervised Contrastive Pre-training. This model has 12 layers and the embedding size is 384. Size is about 30MB.                                                                                                                                                                                  | Ideal for applications requiring efficient, small-sized models with robust text embeddings.                                                                                       |
 | gte-small                             | [Link](https://huggingface.co/ChristianAzinn/gte-small-gguf/resolve/main/gte-small.Q4_K_M.gguf)                                                           | General Text Embeddings (GTE) model. Trained using multi-stage contrastive learning by Alibaba DAMO Academy. Based on the BERT framework, it covers a wide range of domains and scenarios. About 30MB.                                                                                                                      | Suitable for information retrieval, semantic textual similarity, text reranking, and various other downstream tasks requiring text embeddings.                                    |
 | gte-base                              | [Link](https://huggingface.co/ChristianAzinn/gte-base-gguf/resolve/main/gte-base.Q4_K_M.gguf)                                                             | Larger version of previous model, about 75 MB                                                                                                                                                                                                                                                                               |                                                                                                                                                                                   |
@@ -52,7 +51,7 @@ If needed a model will be automatically downloaded to `~/.cache/gguf_models`
 | gte-Qwen2-7B-instruct                 | [Link](https://huggingface.co/niancheng/gte-Qwen2-7B-instruct-Q4_K_M-GGUF/resolve/main/gte-qwen2-7b-instruct-q4_k_m.gguf)                                 | 	The latest in the GTE model family, ranking No.1 in English and Chinese evaluations on the MTEB benchmark. Based on the Qwen2-7B LLM model, it integrates bidirectional attention mechanisms and instruction tuning, with comprehensive multilingual training. 4.68GB                                                      | Best for high-performance multilingual text embeddings and complex tasks requiring top-tier contextual understanding.                                                             |
 | gte-Qwen2-1.5B-instruct               | [Link](https://huggingface.co/second-state/gte-Qwen2-1.5B-instruct-GGUF/resolve/main/gte-Qwen2-1.5B-instruct-Q4_K_M.gguf)                                 | gte-Qwen2-1.5B-instruct is the latest model in the gte (General Text Embedding) model family. The model is built on Qwen2-1.5B LLM model and use the same training data and strategies as the gte-Qwen2-7B-instruct model. 1.12GB                                                                                           |                                                                                                                                                                                   |
 
-By default `paraphrase-multilingual-minilm-l12-v2` will be used if model is not specified
+By default `labse` will be used if model is not specified
 
 ## Usage
 
@@ -115,13 +114,13 @@ Usage: ovos-gguf-embeddings add-document [OPTIONS] DOCUMENT
   (Required)
 
   MODEL: Name or URL of the model used for generating embeddings. (Defaults to
-  'paraphrase-multilingual-minilm-l12-v2')
+  'labse')
 
 Options:
   --database TEXT  Path to the ChromaDB database where the embeddings are
                    stored.
   --model TEXT     Model name or URL used for generating embeddings. Defaults
-                   to "paraphrase-multilingual-minilm-l12-v2".
+                   to "labse".
   --from-file      Indicates if the document argument is a file path.
   --use-sentences  Indicates if the document should be tokenized into
                    sentences; otherwise, it is split into paragraphs.
@@ -141,7 +140,7 @@ Usage: ovos-gguf-embeddings query-document [OPTIONS] QUERY
   it will be saved in the XDG cache directory (~/.cache/chromadb/{database}).
 
   MODEL: Name or URL of the model used for generating embeddings. (Defaults to
-  'paraphrase-multilingual-minilm-l12-v2')
+  'labse')
 
   TOP-K: Number of top results to return. (Defaults to 5)
 
@@ -149,7 +148,7 @@ Options:
   --database TEXT  Path to the ChromaDB database where the embeddings are
                    stored.
   --model TEXT     Model name or URL used for generating embeddings. Defaults
-                   to "paraphrase-multilingual-minilm-l12-v2".
+                   to "labse".
   --top-k INTEGER  Number of top results to return. Defaults to 5.
   --help           Show this message and exit.
 
@@ -168,12 +167,12 @@ Usage: ovos-gguf-embeddings delete-document [OPTIONS] DOCUMENT
   it will be saved in the XDG cache directory (~/.cache/chromadb/{database}).
 
   MODEL: Name or URL of the model used for generating embeddings. (Defaults to
-  'paraphrase-multilingual-minilm-l12-v2')
+  'labse')
 
 Options:
   --database TEXT  ChromaDB database where the embeddings are stored.
   --model TEXT     Model name or URL used for generating embeddings. Defaults
-                   to "paraphrase-multilingual-minilm-l12-v2".
+                   to "labse".
   --help           Show this message and exit.
 ```
 
