@@ -1,5 +1,9 @@
 # GGUFTextEmbeddingsPlugin
 
+> **Deprecated.** This wrapper now ships inside **[`ovos-gguf-plugin`](https://github.com/TigreGotico/ovos-gguf-plugin)**,
+> the single plugin packaging every GGUF wrapper. It keeps the same plugin name (`ovos-gguf-embeddings-plugin`), so
+> existing configs keep working — just install `ovos-gguf-plugin` instead of this package.
+
 The `GGUFTextEmbeddingsPlugin` is a plugin for recognizing and managing text embeddings.
 
 It integrates with [ovos-chromadb-embeddings-plugin](https://github.com/TigreGotico/ovos-chromadb-embeddings-plugin) for
